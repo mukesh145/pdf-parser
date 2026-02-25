@@ -1,0 +1,135 @@
+services:
+  # ── PDF extraction ──────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfiles/Dockerfile.backend
+    ports:
+      - "8002:8000"
+    environment:
+      REDIS_URL: "redis://redis:6379/0"
+      UNET_BASE_URL: "http://model-api:8001"
+    depends_on:
+      redis:
+        condition: service_healthy
+      model-api:
+        condition: service_started
+    volumes:
+      - pdf_storage:/tmp/pdf_storage
+      - image_storage:/tmp/image_storage
+      - zip_storage:/tmp/zip_storage
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfiles/Dockerfile.backend
+    command: ["python", "-m", "app.worker_main"]
+    environment:
+      REDIS_URL: "redis://redis:6379/0"
+      UNET_BASE_URL: "http://model-api:8001"
+    depends_on:
+      redis:
+        condition: service_healthy
+      model-api:
+        condition: service_started
+    volumes:
+      - pdf_storage:/tmp/pdf_storage
+      - image_storage:/tmp/image_storage
+      - zip_storage:/tmp/zip_storage
+
+  # ── Label studio ────────────────────────────────────────────
+  label-backend:
+    build:
+      context: .
+      dockerfile: Dockerfiles/Dockerfile.label-studio
+    ports:
+      - "8502:8501"
+    environment:
+      REDIS_URL: "redis://redis:6379/0"
+      TRAIN_QUEUE_NAME: "train_jobs"
+      UPLOAD_DIR: "/tmp/label_uploads"
+      TRAIN_IMAGE_DIR: "/data/train/images"
+      TRAIN_MASK_DIR: "/data/train/masks"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - label_uploads:/tmp/label_uploads
+      - train_images:/data/train/images
+      - train_masks:/data/train/masks
+
+  # ── Model API ───────────────────────────────────────────────
+  model-api:
+    build:
+      context: .
+      dockerfile: Dockerfiles/Dockerfile.model-api
+    ports:
+      - "8001:8001"
+    environment:
+      MLFLOW_TRACKING_URI: "http://mlflow:5000"
+      MODEL_NAME: "UNetPlusPlus"
+      MODEL_STAGE: "Production"
+      MODEL_POLL_INTERVAL_SEC: "30"
+    depends_on:
+      mlflow:
+        condition: service_started
+
+  # ── Train pipeline ──────────────────────────────────────────
+  train-worker:
+    build:
+      context: .
+      dockerfile: Dockerfiles/Dockerfile.train
+    environment:
+      REDIS_URL: "redis://redis:6379/0"
+      TRAIN_QUEUE_NAME: "train_jobs"
+      TRAIN_IMAGE_DIR: "/data/train/images"
+      TRAIN_MASK_DIR: "/data/train/masks"
+      MLFLOW_TRACKING_URI: "http://mlflow:5000"
+      MLFLOW_EXPERIMENT_NAME: "unet-segmentation-v2"
+      CHECKPOINT_DIR: "/app/checkpoints"
+    depends_on:
+      redis:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
+    volumes:
+      - train_images:/data/train/images:ro
+      - train_masks:/data/train/masks:ro
+      - checkpoints:/app/checkpoints
+
+  # ── Shared infrastructure ───────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6381:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - redis_data:/data
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.12.1
+    ports:
+      - "5000:5000"
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:///mlflow/mlflow.db
+      --default-artifact-root /mlflow/artifacts
+    volumes:
+      - mlflow_data:/mlflow
+
+volumes:
+  pdf_storage:
+  image_storage:
+  zip_storage:
+  redis_data:
+  label_uploads:
+  train_images:
+  train_masks:
+  checkpoints:
+  mlflow_data:

@@ -1,0 +1,26 @@
+# syntax=docker/dockerfile:1.6
+FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY Requirements/torch_common_requirements.txt torch-common-requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir -r torch-common-requirements.txt
+
+COPY Requirements/model_api_requirements.txt requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir -r requirements.txt
+
+COPY model_api/ .
+COPY train_pipeline/ ./train_pipeline/
+
+ENV PYTHONPATH=/app:$PYTHONPATH
+
+EXPOSE 8001
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]

@@ -1,0 +1,21 @@
+# syntax=docker/dockerfile:1.6
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN addgroup --system app && adduser --system --ingroup app app
+
+COPY Requirements/backend_requirements.txt requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir -r requirements.txt
+
+COPY backend/ .
+
+RUN mkdir -p /tmp/pdf_storage /tmp/image_storage /tmp/zip_storage \
+    && chown -R app:app /tmp/pdf_storage /tmp/image_storage /tmp/zip_storage
+
+USER app
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

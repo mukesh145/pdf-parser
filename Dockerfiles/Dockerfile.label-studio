@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1.6
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN addgroup --system app && adduser --system --ingroup app app
+
+COPY Requirements/label_studio_requirements.txt requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir -r requirements.txt
+
+COPY label_studio/backend/ ./backend/
+COPY label_studio/frontend/ ./frontend/
+
+RUN ln -s /app/backend/app /app/app
+
+RUN mkdir -p /tmp/label_uploads /data/train/images /data/train/masks \
+    && chown -R app:app /tmp/label_uploads /data/train
+
+USER app
+
+EXPOSE 8501
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8501"]

@@ -1,0 +1,15 @@
+.git
+.gitignore
+.DS_Store
+
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ipynb_checkpoints/
+
+test_notebooks/
+docs/
+mlruns/
+checkpoints/
+*.log

@@ -1,0 +1,149 @@
+/* ---- reset & base ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #0f1117;
+  color: #e4e4e7;
+  min-height: 100vh;
+}
+
+header {
+  text-align: center;
+  padding: 1.5rem 1rem 0.5rem;
+}
+header h1 { font-size: 1.6rem; color: #7c83ff; }
+.subtitle { font-size: 0.85rem; color: #888; margin-top: 0.25rem; }
+
+main { max-width: 1600px; margin: 0 auto; padding: 1rem; }
+
+.hidden { display: none !important; }
+
+/* ---- buttons ---- */
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1.2rem;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #1e1f26;
+  color: #e4e4e7;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn:hover { background: #2a2b35; border-color: #555; }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.btn-primary {
+  background: #5b5fff;
+  border-color: #5b5fff;
+  color: #fff;
+  font-weight: 600;
+}
+.btn-primary:hover { background: #4a4ee6; }
+
+/* ---- upload area ---- */
+.upload-area {
+  border: 2px dashed #333;
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+}
+.upload-area.drag-over { border-color: #5b5fff; background: rgba(91,95,255,0.06); }
+.upload-area p { margin-bottom: 0.5rem; }
+.upload-area .small { font-size: 0.75rem; color: #666; }
+
+/* ---- toolbar ---- */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: #181920;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+}
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tool-btn {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.tool-btn.active { background: #5b5fff; border-color: #5b5fff; color: #fff; }
+.tool-btn.danger { color: #f87171; border-color: #5c2020; }
+.tool-btn.danger:hover { background: #5c2020; color: #fff; }
+.toolbar label { font-size: 0.8rem; color: #888; }
+.toolbar span { font-size: 0.8rem; min-width: 2rem; text-align: center; }
+input[type="range"] {
+  -webkit-appearance: none;
+  height: 4px;
+  background: #333;
+  border-radius: 2px;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #5b5fff;
+  cursor: pointer;
+}
+
+/* ---- canvas ---- */
+.canvas-wrapper {
+  position: relative;
+  margin: 0 auto;
+  background: #111218;
+  border: 1px solid #222;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.canvas-wrapper canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+#canvas-mask {
+  opacity: 0.5;
+}
+#canvas-cursor { cursor: none; }
+
+/* ---- nav / submit ---- */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+}
+#image-counter { font-size: 0.9rem; color: #888; }
+
+.submit-bar { text-align: center; margin-top: 1rem; }
+
+/* ---- toast ---- */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.6rem 1.4rem;
+  background: #1e1f26;
+  border: 1px solid #333;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  z-index: 999;
+  transition: opacity 0.3s;
+}
+.toast.error { border-color: #b91c1c; color: #f87171; }

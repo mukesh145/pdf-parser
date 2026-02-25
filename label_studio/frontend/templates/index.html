@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Label Studio — Mask Editor</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Label Studio</h1>
+    <p class="subtitle">Upload images, draw segmentation masks, submit for training</p>
+  </header>
+
+  <main>
+    <!-- Upload panel -->
+    <section id="upload-section">
+      <div class="upload-area" id="drop-zone">
+        <p>Drag &amp; drop images or a <strong>.zip</strong> file here</p>
+        <p class="small">or</p>
+        <label class="btn" for="file-input">Browse Files</label>
+        <input type="file" id="file-input" multiple accept="image/*,.zip" hidden />
+      </div>
+    </section>
+
+    <!-- Editor panel (hidden until images loaded) -->
+    <section id="editor-section" class="hidden">
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <button id="btn-brush" class="tool-btn active" title="Brush">
+            <span class="icon">&#9998;</span> Brush
+          </button>
+          <button id="btn-eraser" class="tool-btn" title="Eraser">
+            <span class="icon">&#9986;</span> Eraser
+          </button>
+        </div>
+
+        <div class="toolbar-group">
+          <label for="brush-size">Size</label>
+          <input type="range" id="brush-size" min="2" max="80" value="20" />
+          <span id="brush-size-label">20</span>
+        </div>
+
+        <div class="toolbar-group">
+          <label for="mask-opacity">Opacity</label>
+          <input type="range" id="mask-opacity" min="10" max="100" value="50" />
+          <span id="mask-opacity-label">50%</span>
+        </div>
+
+        <div class="toolbar-group">
+          <button id="btn-clear" class="tool-btn danger" title="Clear mask">Clear</button>
+        </div>
+      </div>
+
+      <div class="canvas-wrapper">
+        <canvas id="canvas-image"></canvas>
+        <canvas id="canvas-mask"></canvas>
+        <canvas id="canvas-cursor"></canvas>
+      </div>
+
+      <div class="nav-bar">
+        <button id="btn-prev" class="btn" disabled>&larr; Prev</button>
+        <span id="image-counter">0 / 0</span>
+        <button id="btn-next" class="btn">Next &rarr;</button>
+      </div>
+
+      <div class="submit-bar">
+        <button id="btn-submit" class="btn btn-primary">Submit All Masks</button>
+      </div>
+    </section>
+
+    <!-- Status toast -->
+    <div id="toast" class="toast hidden"></div>
+  </main>
+
+  <script src="/static/js/canvas.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
