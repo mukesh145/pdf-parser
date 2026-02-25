@@ -20,8 +20,8 @@ async def lifespan(app: FastAPI):
     loaded = manager.load_production_model()
     if not loaded:
         log.warning(
-            "Starting with fallback untrained model — predictions are low quality "
-            "until a trained model is available in MLflow"
+            "Starting with local fallback ONNX model; will hot-swap to MLflow "
+            "Production ONNX model when available"
         )
     manager.start_polling()
     yield

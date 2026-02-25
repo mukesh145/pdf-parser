@@ -23,6 +23,12 @@ class Settings(BaseSettings):
 
     # Worker poll interval
     poll_interval_sec: int = 3
+    max_page_workers: int = 1
+
+    # U-Net client request behavior
+    unet_timeout_sec: float = 60.0
+    unet_request_retries: int = 3
+    unet_retry_backoff_sec: float = 0.5
 
     class Config:
         env_file = ".env"

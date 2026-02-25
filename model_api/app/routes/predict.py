@@ -5,12 +5,10 @@ import io
 import logging
 
 import numpy as np
-import torch
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 from PIL import Image
 from pydantic import BaseModel
-from torchvision import transforms
 
 from app.model_manager import manager
 
@@ -22,33 +20,42 @@ IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 DIVISOR = 16  # UNet++ with 4 pool layers needs spatial dims divisible by 16
 
-_preprocess = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
-])
-
-
 class PredictRequest(BaseModel):
     image_base64: str
 
 
-def _pad_to_divisor(tensor: torch.Tensor, divisor: int) -> tuple[torch.Tensor, tuple[int, int]]:
-    """Pad a (C, H, W) tensor so H and W are divisible by *divisor*.
+def _preprocess(image: Image.Image) -> np.ndarray:
+    arr = np.asarray(image, dtype=np.float32) / 255.0  # (H, W, C)
+    arr = (arr - np.array(IMAGENET_MEAN, dtype=np.float32)) / np.array(
+        IMAGENET_STD, dtype=np.float32,
+    )
+    return np.transpose(arr, (2, 0, 1))  # (C, H, W)
 
-    Returns the padded tensor and the original (H, W) for later cropping.
-    """
-    _, h, w = tensor.shape
+
+def _pad_to_divisor(array: np.ndarray, divisor: int) -> tuple[np.ndarray, tuple[int, int]]:
+    """Pad a (C, H, W) array so H and W are divisible by *divisor*."""
+    _, h, w = array.shape
     pad_h = (divisor - h % divisor) % divisor
     pad_w = (divisor - w % divisor) % divisor
     if pad_h or pad_w:
-        tensor = torch.nn.functional.pad(tensor, (0, pad_w, 0, pad_h), mode="reflect")
-    return tensor, (h, w)
+        array = np.pad(
+            array,
+            ((0, 0), (0, pad_h), (0, pad_w)),
+            mode="reflect",
+        )
+    return array, (h, w)
+
+
+def _sigmoid(x: np.ndarray) -> np.ndarray:
+    return 1.0 / (1.0 + np.exp(-x))
 
 
 @router.post("/predict")
-async def predict(request: PredictRequest) -> Response:
-    model = manager.model
-    if model is None:
+def predict(request: PredictRequest) -> Response:
+    session = manager.session
+    input_name = manager.input_name
+    output_name = manager.output_name
+    if session is None or input_name is None or output_name is None:
         raise HTTPException(status_code=503, detail="Model not loaded yet")
 
     try:
@@ -57,17 +64,13 @@ async def predict(request: PredictRequest) -> Response:
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Invalid image data: {exc}") from exc
 
-    input_tensor = _preprocess(image)
-    input_tensor, (orig_h, orig_w) = _pad_to_divisor(input_tensor, DIVISOR)
-    batch = input_tensor.unsqueeze(0)
+    input_arr = _preprocess(image)
+    input_arr, (orig_h, orig_w) = _pad_to_divisor(input_arr, DIVISOR)
+    batch = np.expand_dims(input_arr, axis=0).astype(np.float32)  # (1, C, H, W)
 
-    device = next(model.parameters()).device
-    batch = batch.to(device)
-
-    with torch.no_grad():
-        logits = model(batch)
-
-    mask = (torch.sigmoid(logits[0, 0, :orig_h, :orig_w]) > 0.5).cpu().numpy()
+    logits = session.run([output_name], {input_name: batch})[0]
+    probs = _sigmoid(logits[0, 0, :orig_h, :orig_w])
+    mask = probs > 0.5
     mask_uint8 = (mask * 255).astype(np.uint8)
 
     buf = io.BytesIO()

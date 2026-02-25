@@ -43,7 +43,12 @@ def get_request_queue() -> IRequestQueue:
 
 def get_mask_service() -> IMaskService:
     """Provide a concrete IMaskService implementation."""
-    return UnetHttpClient(base_url=settings.unet_base_url)
+    return UnetHttpClient(
+        base_url=settings.unet_base_url,
+        timeout_sec=settings.unet_timeout_sec,
+        retries=settings.unet_request_retries,
+        retry_backoff_sec=settings.unet_retry_backoff_sec,
+    )
 
 
 def get_pdf_parser() -> IPdfParser:

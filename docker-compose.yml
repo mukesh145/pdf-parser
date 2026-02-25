@@ -27,6 +27,9 @@ services:
     environment:
       REDIS_URL: "redis://redis:6379/0"
       UNET_BASE_URL: "http://model-api:8001"
+      MAX_PAGE_WORKERS: "1"
+      UNET_REQUEST_RETRIES: "4"
+      UNET_RETRY_BACKOFF_SEC: "0.5"
     depends_on:
       redis:
         condition: service_healthy
@@ -70,6 +73,11 @@ services:
       MODEL_NAME: "UNetPlusPlus"
       MODEL_STAGE: "Production"
       MODEL_POLL_INTERVAL_SEC: "30"
+      MODEL_API_WORKERS: "1"
+      ONNX_INTRA_OP_NUM_THREADS: "1"
+      ONNX_INTER_OP_NUM_THREADS: "1"
+    command: >
+      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8001 --workers $${MODEL_API_WORKERS:-1}"
     depends_on:
       mlflow:
         condition: service_started

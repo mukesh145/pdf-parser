@@ -28,6 +28,7 @@ def build_worker() -> ImageExtractorWorker:
         pdf_parser=get_pdf_parser(),
         image_extractor=get_image_extractor(),
         poll_interval_sec=settings.poll_interval_sec,
+        max_page_workers=settings.max_page_workers,
     )
 
 

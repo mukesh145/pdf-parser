@@ -208,3 +208,4 @@ __marimo__/
 
 test_notebooks/
 backend/tests/
+model_api/model/model.onnx
